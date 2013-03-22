@@ -21,14 +21,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.sonymobile.jenkins.plugins.teamview;
 
 import hudson.Extension;
-import hudson.model.Action;
-import hudson.model.Hudson;
 import hudson.model.RootAction;
+import hudson.util.FormValidation;
+import net.sf.json.JSONObject;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import java.util.Map;
+import hudson.model.Descriptor.FormException;
 
 /**
  * View for the teams.
@@ -37,6 +41,10 @@ import org.kohsuke.stapler.StaplerResponse;
  */
 @Extension
 public class Teams implements RootAction {
+    /** the URL name for the Teams page.*/
+    public static final String TEAMS_URL_NAME = "teams";
+
+
     @Override
     public String getIconFileName() {
         return "user.png";
@@ -44,27 +52,12 @@ public class Teams implements RootAction {
 
     @Override
     public String getDisplayName() {
-        return Messages.TeamView_DisplayName();
+        return Messages.Teams_DisplayName();
     }
 
     @Override
     public String getUrlName() {
-        return Messages.TeamView_UrlName();
-    }
-
-/**
-     * Provides the singleton instance of this class that Jenkins has loaded. Throws an IllegalStateException if for
-     * some reason the action can't be found.
-     *
-     * @return the instance.
-     */
-    public static Teams getInstance() {
-        for (Action action : Hudson.getInstance().getActions()) {
-            if (action instanceof Teams) {
-                return (Teams)action;
-            }
-        }
-        throw new IllegalStateException("We seem to not have been initialized!");
+        return TEAMS_URL_NAME;
     }
 
     /**
@@ -75,7 +68,49 @@ public class Teams implements RootAction {
      * @return the correct Team.
      */
     public Team getDynamic(String token, StaplerRequest req, StaplerResponse resp) {
-        return null;
+        Map<String, Team> teams = PluginImpl.getInstance().getTeams();
+        return teams.get(token);
     }
 
+    /**
+     * Run when the user saves a team.
+     *
+     * @param request the StaplerRequest.
+     * @param response the StaplerResponse.
+     * @throws Exception if anything goes wrong with the form.
+     */
+    public synchronized void doConfigSubmit(StaplerRequest request, StaplerResponse response)
+            throws Exception {
+        JSONObject form = request.getSubmittedForm();
+        String name = form.getString("name");
+        String description = form.getString("description");
+        if (name == null || name.isEmpty()) {
+            throw new FormException("The team name cannot be empty", "name");
+        }
+        Team team = PluginImpl.getInstance().getTeams().get(name);
+        if (team != null) {
+            throw new FormException("A team with name: " + name + " already exists!", "name");
+        }
+        team = new Team(name, description);
+        PluginImpl.getInstance().addTeam(team);
+        team.save();
+        response.sendRedirect2(".");
+    }
+
+    /**
+     * Form validation for name. Checks for not empty and that it is unique..
+     *
+     * @param value the form value.
+     * @return {@link hudson.util.FormValidation#ok()} if everything is well.
+     */
+    public FormValidation doCheckName(@QueryParameter final String value) {
+        if (value == null || value.isEmpty()) {
+            return FormValidation.error("Please enter a name!");
+        }
+        Team team = PluginImpl.getInstance().getTeams().get(value);
+        if (team != null) {
+            return FormValidation.error("A team with name: " + value + " already exists!");
+        }
+        return FormValidation.ok();
+    }
 }

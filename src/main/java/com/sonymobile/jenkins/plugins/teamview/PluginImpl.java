@@ -28,6 +28,7 @@ import hudson.model.Hudson;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * The main thing.
@@ -35,27 +36,24 @@ import java.util.Map;
  * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
  */
 public class PluginImpl extends Plugin {
-    private Map<String, Team> teams;
+    private static final Logger logger = Logger.getLogger(Team.class.getName());
 
-    /**
-     * Standard getter.
-     *
-     * @return the teams.
-     */
-    public Map<String, Team> getTeams() {
-        teams = new HashMap<String, Team>();
-        teams.put("team1", new Team("team1"));
-        teams.put("team2", new Team("team2"));
-        return teams;
-    }
+    private Map<String, Team> teams;
 
     @Override
     public void start() throws Exception {
         super.start();
-        load();
-        if (teams == null) {
-            teams = new HashMap<String, Team>();
+        logger.info("Starting");
+        teams = new HashMap<String, Team>();
+        String[] teamNames = Team.getTeamNames();
+        if (teamNames == null) {
+            return;
         }
+        for (String teamName : teamNames) {
+            Team team = new Team(teamName, null);
+            teams.put(teamName, team);
+        }
+        logger.info("Started");
     }
 
     /**
@@ -65,5 +63,30 @@ public class PluginImpl extends Plugin {
      */
     public static PluginImpl getInstance() {
         return Hudson.getInstance().getPlugin(PluginImpl.class);
+    }
+
+
+    /**
+     * Standard getter.
+     *
+     * @return the teams.
+     */
+    public Map<String, Team> getTeams() {
+        if (teams == null) {
+            teams = new HashMap<String, Team>();
+        }
+        return teams;
+    }
+
+    /**
+     * Add a team to the map of teams.
+     *
+     * @param team the Team to add.
+     */
+    public void addTeam(Team team) {
+        if (teams == null) {
+            teams = new HashMap<String, Team>();
+        }
+        teams.put(team.getName(), team);
     }
 }

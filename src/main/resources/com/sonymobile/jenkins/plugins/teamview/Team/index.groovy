@@ -21,29 +21,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.sonymobile.jenkins.plugins.teamview.Teams
-
-import com.sonymobile.jenkins.plugins.teamview.PluginImpl
+package com.sonymobile.jenkins.plugins.teamview.Team
 
 def l = namespace(lib.LayoutTagLib);
-def teams = PluginImpl.getInstance().getTeams();
 l.layout() {
     l.header(title: _("Teams"))
     l.side_panel() {
-        l.task(icon: "images/24x24/up.png",
-               href: rootURL + "/" + my.getUrlName() + "/createTeam",
-              title: _("Create team"));
+        l.task(icon: "images/24x24/user.png",
+        href: "views",
+        title: "team views");
     }
 
     l.main_panel() {
-        h1(_("Teams"));
-        ul{
-            for (team in teams.values()) {
-                li{
-                    a(href: team.getName(),
-                    alt: _(team.getName())) {text(_(team.getName()))}
-                }
-            }
+        h1(my.getName());
+        div() {
         }
     }
 }

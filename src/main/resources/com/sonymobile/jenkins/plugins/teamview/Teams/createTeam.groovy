@@ -21,27 +21,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
+
+
 package com.sonymobile.jenkins.plugins.teamview.Teams
 
-import com.sonymobile.jenkins.plugins.teamview.PluginImpl
-
 def l = namespace(lib.LayoutTagLib);
-def teams = PluginImpl.getInstance().getTeams();
+def f = namespace(lib.FormTagLib);
 l.layout() {
-    l.header(title: _("Teams"))
+    l.header(title: _("Create team"))
     l.side_panel() {
-        l.task(icon: "images/24x24/up.png",
-               href: rootURL + "/" + my.getUrlName() + "/createTeam",
-              title: _("Create team"));
     }
 
     l.main_panel() {
-        h1(_("Teams"));
-        ul{
-            for (team in teams.values()) {
-                li{
-                    a(href: team.getName(),
-                    alt: _(team.getName())) {text(_(team.getName()))}
+        h1(_("Create team"));
+        table{
+            tr {
+                td() {
+                    f.form(action: "configSubmit", method: "POST", name: "causeForm") {
+                        f.entry(title: _("Team name"), field: "name") {
+                            f.textbox(value: "", checkUrl: "'checkName?value='+escape(this.value)")
+                        }
+                        f.entry(title: _("Description"), field: "description") {
+                            f.textarea(value: "")
+                        }
+                        f.block {
+                            div(style: "margin-top: 10px")
+                            f.submit(value: _("Save"))
+                        }
+                    }
                 }
             }
         }
