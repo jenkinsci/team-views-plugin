@@ -21,23 +21,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.sonymobile.jenkins.plugins.teamview.Team
 
-def l = namespace(lib.LayoutTagLib);
-l.layout() {
-    l.header(title: _("Teams"))
-    l.side_panel() {
-        l.task(icon: "images/24x24/user.png",
-        href: "views",
-        title: "Views");
-        l.task(icon: "images/24x24/user.png",
-        href: "configure",
-        title: "Configure");
-    }
+import com.sonymobile.jenkins.plugins.teamview.TeamProperty
 
+def l = namespace(lib.LayoutTagLib);
+def f = namespace(lib.FormTagLib);
+
+l.layout() {
     l.main_panel() {
-        h1(my.getName());
-        div() {
+        f.form(method : "post", action : "configSubmit", name : "config"){
+            f.entry(title: _("Team name"), field: "name") {
+                f.textbox(value: my.name)
+            }
+            f.entry(title: _("Description"), field: "description") {
+                f.textarea(value: my.description)
+            }
+            for(TeamProperty prop : my.properties) {
+                include(prop, "config");
+            }
+            f.block {
+                div(style: "margin-top: 10px")
+                f.submit(value: _("Save"))
+            }
         }
     }
 }

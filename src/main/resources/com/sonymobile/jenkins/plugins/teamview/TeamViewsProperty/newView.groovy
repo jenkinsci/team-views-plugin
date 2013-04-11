@@ -21,23 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.sonymobile.jenkins.plugins.teamview.Team
+
+package com.sonymobile.jenkins.plugins.teamview.TeamViewsProperty
+
+import hudson.model.View
 
 def l = namespace(lib.LayoutTagLib);
-l.layout() {
-    l.header(title: _("Teams"))
-    l.side_panel() {
-        l.task(icon: "images/24x24/user.png",
-        href: "views",
-        title: "Views");
-        l.task(icon: "images/24x24/user.png",
-        href: "configure",
-        title: "Configure");
+def n = namespace("/lib/hudson/newFromList");
+
+l.layout(norefresh:true) {
+    l.main_panel() {
+        def views = View.allInstantiable();
+        n.form(
+                nameTitle:_("View name"),
+                action: "createView",
+                descriptors: views,
+                checkUrl: "viewExistsCheck"
+        );
     }
 
-    l.main_panel() {
-        h1(my.getName());
-        div() {
-        }
-    }
 }

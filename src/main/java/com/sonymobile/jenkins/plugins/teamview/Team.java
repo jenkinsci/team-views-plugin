@@ -27,6 +27,7 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import hudson.BulkChange;
 import hudson.CopyOnWrite;
 import hudson.XmlFile;
+import hudson.model.Descriptor;
 import hudson.model.Saveable;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -39,6 +40,9 @@ import java.util.logging.Logger;
 
 import hudson.model.listeners.SaveableListener;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
 
 
 /**
@@ -123,6 +127,15 @@ public class Team implements Saveable {
      */
     public String getName() {
         return name;
+    }
+
+    /**
+     * Standard getter.
+     *
+     * @return the description.
+     */
+    public String getDescription() {
+        return description;
     }
 
     /**
@@ -265,6 +278,22 @@ public class Team implements Saveable {
     }
 
     /**
+     * Renames the team on disk, used when we rename a Team.
+     *
+     * @param to the new team name.
+     * @return true if the rename was successful, false if not.
+     */
+    private boolean renameTeamOnDisk(String to) {
+        File teamDirectory = new File(getRootDir(), name);
+        File newTeamDirectory = new File(getRootDir(), to);
+        if (teamDirectory.exists() && teamDirectory.isDirectory()) {
+            return teamDirectory.renameTo(newTeamDirectory);
+        } else {
+            return newTeamDirectory.mkdirs();
+        }
+    }
+
+    /**
      * Save the settings to a file.
      *
      * @throws IOException if the file cannot be saved.
@@ -275,5 +304,41 @@ public class Team implements Saveable {
         }
         getConfigFile().write(this);
         SaveableListener.fireOnChange(this, getConfigFile());
+    }
+
+    /**
+     * Run when the user saves a reconfigured team.
+     *
+     * @param request the StaplerRequest.
+     * @param response the StaplerResponse.
+     * @throws Exception if anything goes wrong with the form.
+     */
+    public synchronized void doConfigSubmit(StaplerRequest request, StaplerResponse response) throws Exception {
+        JSONObject form = request.getSubmittedForm();
+        String formName = form.getString("name");
+        String formDescription = form.getString("description");
+        String formPrimaryViewName = form.getString("primaryViewName");
+        if (!formName.equals(name)) {
+            if (PluginImpl.getInstance().getTeams().get(formName) == null) {
+                boolean renamed = renameTeamOnDisk(formName);
+                if (renamed) {
+                    PluginImpl.getInstance().getTeams().remove(name);
+                    name = formName;
+                    PluginImpl.getInstance().addTeam(this);
+                } else {
+                    logger.warning("The team with name " + name + " could not be renamed");
+                }
+            } else {
+                throw new Descriptor.FormException("A team with that name already exists!", "name");
+            }
+        }
+        this.description = formDescription;
+        for (TeamProperty prop : properties) {
+            if (prop instanceof TeamViewsProperty) {
+                ((TeamViewsProperty)prop).setPrimaryViewName(formPrimaryViewName);
+            }
+        }
+        save();
+        response.sendRedirect2("/" + getUrl());
     }
 }

@@ -21,23 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.sonymobile.jenkins.plugins.teamview.Team
 
-def l = namespace(lib.LayoutTagLib);
-l.layout() {
-    l.header(title: _("Teams"))
-    l.side_panel() {
-        l.task(icon: "images/24x24/user.png",
-        href: "views",
-        title: "Views");
-        l.task(icon: "images/24x24/user.png",
-        href: "configure",
-        title: "Configure");
-    }
+package com.sonymobile.jenkins.plugins.teamview.TeamViewsProperty
 
-    l.main_panel() {
-        h1(my.getName());
-        div() {
-        }
-    }
+def f = namespace(lib.FormTagLib);
+
+f.entry(title: _("Primary view name"), field: "primaryViewName") {
+    //TODO checkURL ensuring the view exists, haven't been able to make it work.
+    f.textbox(value: my.primaryViewName);
 }

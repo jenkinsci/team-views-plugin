@@ -26,6 +26,7 @@ package com.sonymobile.jenkins.plugins.teamview;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import hudson.Extension;
+import hudson.Util;
 import hudson.model.Action;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
@@ -36,12 +37,14 @@ import hudson.model.ViewGroup;
 import hudson.model.ViewGroupMixIn;
 import hudson.security.ACL;
 import hudson.security.Permission;
+import hudson.util.FormValidation;
 import hudson.views.ViewsTabBar;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.acegisecurity.Authentication;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerFallback;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -211,7 +214,6 @@ public final class TeamViewsProperty extends TeamProperty implements ViewGroup, 
      */
     public synchronized void doCreateView(StaplerRequest req, StaplerResponse rsp)
             throws IOException, ServletException, ParseException, Descriptor.FormException {
-        //checkPermission(View.CREATE);
         addView(View.create(req, rsp, this));
     }
 
@@ -250,7 +252,35 @@ public final class TeamViewsProperty extends TeamProperty implements ViewGroup, 
         return "views";
     }
 
-
+    /**
+     * Checks if a private view with the given name exists.
+     * An error is returned if exists==true but the view does not exist.
+     * An error is also returned if exists==false but the view does exist.
+     *
+     * @param value the view name to check.
+     * @param exists whether the view is supposed to exist or not.
+     * @return a {@link FormValidation} describing whether the view exists or not.
+     **/
+    public FormValidation doViewExistsCheck(@QueryParameter String value, @QueryParameter boolean exists) {
+        checkPermission(View.CREATE);
+        String view = Util.fixEmpty(value);
+        if (view == null) {
+            return FormValidation.ok();
+        }
+        if (exists) {
+            if (getView(view) != null) {
+                return FormValidation.ok();
+            } else {
+                return FormValidation.error(Messages.TeamViewsProperty_ViewExistsCheck_NotExist());
+            }
+        } else {
+            if (getView(view) == null) {
+                return FormValidation.ok();
+            } else {
+                return FormValidation.error(Messages.TeamViewsProperty_ViewExistsCheck_AlreadyExists());
+            }
+        }
+    }
 
     /**
      * Descriptor for the TeamViewsProperty.
