@@ -23,8 +23,10 @@
  */
 package com.sonymobile.jenkins.plugins.teamview;
 
+import hudson.Functions;
 import hudson.Plugin;
 import hudson.model.Hudson;
+import org.kohsuke.stapler.Stapler;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -88,5 +90,20 @@ public class PluginImpl extends Plugin {
             teams = new HashMap<String, Team>();
         }
         teams.put(team.getName(), team);
+    }
+
+    /**
+     * Calculates the path to the icon.
+     * Copied from {@link jenkins.model.ModelObjectWithContextMenu.ContextMenu#add(hudson.model.Action)}
+     *
+     * @param base the suffix of the icon path
+     * @return the full path of the icon including resources.
+     */
+    public static String getIconPath(String base) {
+        if (base.startsWith("images/")) {
+            return Stapler.getCurrentRequest().getContextPath() + Functions.getResourcePath() + '/' + base;
+        } else {
+            return Stapler.getCurrentRequest().getContextPath() + "" + '/' + base;
+        }
     }
 }

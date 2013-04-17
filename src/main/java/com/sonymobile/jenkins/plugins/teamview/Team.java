@@ -28,7 +28,15 @@ import hudson.BulkChange;
 import hudson.CopyOnWrite;
 import hudson.XmlFile;
 import hudson.model.Descriptor;
+import hudson.model.DescriptorByNameOwner;
 import hudson.model.Saveable;
+import hudson.model.listeners.SaveableListener;
+import jenkins.model.Jenkins;
+import jenkins.model.ModelObjectWithContextMenu;
+import net.sf.json.JSONObject;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -38,11 +46,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import hudson.model.listeners.SaveableListener;
-import jenkins.model.Jenkins;
-import net.sf.json.JSONObject;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import static com.sonymobile.jenkins.plugins.teamview.PluginImpl.getIconPath;
 
 
 /**
@@ -51,7 +55,7 @@ import org.kohsuke.stapler.StaplerResponse;
  * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
  */
 @XStreamAlias("team")
-public class Team implements Saveable {
+public class Team implements Saveable, DescriptorByNameOwner, ModelObjectWithContextMenu, Comparable<Team> {
     private static final Logger logger = Logger.getLogger(Team.class.getName());
     private static final String CONFIG_FILE_NAME = "config.xml";
     private static final String TEAM_DIRECTORY_NAME = "teams";
@@ -65,7 +69,6 @@ public class Team implements Saveable {
     @CopyOnWrite
     private volatile List<TeamProperty> properties = new ArrayList<TeamProperty>();
 
-
     static {
         Jenkins.XSTREAM.processAnnotations(Team.class);
         Jenkins.XSTREAM.processAnnotations(TeamViewsProperty.class);
@@ -74,7 +77,7 @@ public class Team implements Saveable {
     /**
      * Standard constructor.
      *
-     * @param name the name of the team.
+     * @param name        the name of the team.
      * @param description the description of this team.
      */
     public Team(String name, String description) {
@@ -87,6 +90,7 @@ public class Team implements Saveable {
      * Loads the other data from disk if it's available.
      */
     public synchronized void load() {
+
         properties.clear();
 
         XmlFile config = getConfigFile();
@@ -139,8 +143,7 @@ public class Team implements Saveable {
     }
 
     /**
-     * Getter for the Url, relative to the Jenkins root to this team.
-     * Will end in a '/'.
+     * Getter for the Url, relative to the Jenkins root to this team. Will end in a '/'.
      *
      * @return the Url.
      */
@@ -169,10 +172,13 @@ public class Team implements Saveable {
     /**
      * Dynamic Stapler URL binding. Provides the ability to navigate to a team via for example:
      * <code>/jenkins/teams/team1</code>
+     *
      * @param token the team name.
+     * @param req   the StaplerRequest
+     * @param rsp   the StaplerResponse
      * @return a Team.
      */
-    public Object getDynamic(String token) {
+    public Object getDynamic(String token, StaplerRequest req, StaplerResponse rsp) {
         for (TeamProperty property : getProperties()) {
             if (property.getUrlName().equals(token) || property.getUrlName().equals('/' + token)) {
                 return property;
@@ -309,7 +315,7 @@ public class Team implements Saveable {
     /**
      * Run when the user saves a reconfigured team.
      *
-     * @param request the StaplerRequest.
+     * @param request  the StaplerRequest.
      * @param response the StaplerResponse.
      * @throws Exception if anything goes wrong with the form.
      */
@@ -340,5 +346,53 @@ public class Team implements Saveable {
         }
         save();
         response.sendRedirect2("/" + getUrl());
+    }
+
+    @Override
+    public Descriptor getDescriptorByName(String s) {
+        return Jenkins.getInstance().getDescriptorByName(s);
+    }
+
+    @Override
+    public String getDisplayName() {
+        return getName();
+    }
+
+
+    @Override
+    public ContextMenu doContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
+        return new ContextMenu().add("views", getIconPath("images/24x24/user.png"), Messages.Team_Views()).
+                add("configure", getIconPath("images/24x24/setting.png"), Messages.Team_Configure());
+
+    }
+
+    @Override
+    public int compareTo(Team o) {
+        return getName().compareTo(o.getName());
+    }
+
+    //CS IGNORE AvoidInlineConditionals FOR NEXT 24 LINES. REASON: Auto generated code.
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Team team = (Team)o;
+
+        if (name != null ? !name.equals(team.name) : team.name != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return name != null ? name.hashCode() : 0;
     }
 }

@@ -23,16 +23,19 @@
  */
 package com.sonymobile.jenkins.plugins.teamview.Team
 
+import com.sonymobile.jenkins.plugins.teamview.Messages
+
 def l = namespace(lib.LayoutTagLib);
-l.layout() {
-    l.header(title: _("Teams"))
+l.layout(title: my.getName()) {
     l.side_panel() {
+
         l.task(icon: "images/24x24/user.png",
-        href: "views",
-        title: "Views");
-        l.task(icon: "images/24x24/user.png",
-        href: "configure",
-        title: "Configure");
+               href: "views",
+               title: Messages.Team_Views());
+        l.task(icon: "images/24x24/setting.png",
+               href: "configure",
+               title: Messages.Team_Configure());
+
     }
 
     l.main_panel() {

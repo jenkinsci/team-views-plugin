@@ -25,14 +25,22 @@
 package com.sonymobile.jenkins.plugins.teamview;
 
 import hudson.Extension;
+import hudson.Functions;
 import hudson.model.RootAction;
 import hudson.util.FormValidation;
+import jenkins.model.ModelObjectWithContextMenu;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import hudson.model.Descriptor.FormException;
+
+import static com.sonymobile.jenkins.plugins.teamview.PluginImpl.getIconPath;
 
 /**
  * View for the teams.
@@ -40,7 +48,7 @@ import hudson.model.Descriptor.FormException;
  * @author Tomas Westling &lt;tomas.westling&gt;
  */
 @Extension
-public class Teams implements RootAction {
+public class Teams implements RootAction, ModelObjectWithContextMenu {
     /** the URL name for the Teams page.*/
     public static final String TEAMS_URL_NAME = "teams";
 
@@ -112,5 +120,18 @@ public class Teams implements RootAction {
             return FormValidation.error("A team with name: " + value + " already exists!");
         }
         return FormValidation.ok();
+    }
+
+    @Override
+    public ContextMenu doContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
+        ContextMenu menu = new ContextMenu();
+        menu.add("createTeam", getIconPath("images/24x24/new-package.png"), Messages.Teams_Create());
+        String uIcon = getIconPath("images/24x24/user.png");
+        List<Team> teams = new ArrayList<Team>(PluginImpl.getInstance().getTeams().values());
+        Collections.sort(teams);
+        for (Team t : teams) {
+            menu.add(Functions.encode(t.getUrlName()), uIcon, t.getName());
+        }
+        return menu;
     }
 }

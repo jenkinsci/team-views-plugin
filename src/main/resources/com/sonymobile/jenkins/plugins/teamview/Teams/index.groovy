@@ -24,15 +24,15 @@
 package com.sonymobile.jenkins.plugins.teamview.Teams
 
 import com.sonymobile.jenkins.plugins.teamview.PluginImpl
+import com.sonymobile.jenkins.plugins.teamview.Messages
 
 def l = namespace(lib.LayoutTagLib);
 def teams = PluginImpl.getInstance().getTeams();
-l.layout() {
-    l.header(title: _("Teams"))
+l.layout(title: _("Teams")) {
     l.side_panel() {
-        l.task(icon: "images/24x24/up.png",
+        l.task(icon: "images/24x24/new-package.png",
                href: rootURL + "/" + my.getUrlName() + "/createTeam",
-              title: _("Create team"));
+              title: Messages.Teams_Create());
     }
 
     l.main_panel() {
