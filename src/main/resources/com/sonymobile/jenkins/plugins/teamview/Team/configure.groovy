@@ -26,10 +26,12 @@ package com.sonymobile.jenkins.plugins.teamview.Team
 
 import com.sonymobile.jenkins.plugins.teamview.TeamProperty
 
-def l = namespace(lib.LayoutTagLib);
-def f = namespace(lib.FormTagLib);
+def l =  namespace(lib.LayoutTagLib);
+def f =  namespace(lib.FormTagLib);
+def st = namespace("jelly:stapler")
 
 l.layout() {
+    st.include(page:"sidepanel")
     l.main_panel() {
         f.form(method : "post", action : "configSubmit", name : "config"){
             f.entry(title: _("Team name"), field: "name") {

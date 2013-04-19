@@ -23,15 +23,24 @@
  */
 package com.sonymobile.jenkins.plugins.teamview.Team
 
+import hudson.model.User
+
 
 def l =  namespace(lib.LayoutTagLib);
+def f =  namespace(lib.FormTagLib);
 def st = namespace("jelly:stapler")
 
 l.layout(title: my.getName()) {
     st.include(page:"sidepanel")
     l.main_panel() {
-        h1(my.getName());
-        div() {
+        h1(_("Import Views from User"));
+        f.form(method: "POST", action: "importViewsSubmit") {
+          f.entry(title: _("Username"), help: resURL + "/plugin/team-view/help/import-userName.html") {
+            f.editableComboBox(name: "userName", items: User.all.collect {return it.id})
+          }
+          f.block {
+            f.submit(value: _("Import"))
+          }
         }
     }
 }

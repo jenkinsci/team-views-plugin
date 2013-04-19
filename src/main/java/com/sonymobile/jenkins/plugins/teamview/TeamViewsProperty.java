@@ -58,7 +58,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- *  A class that remembers team views.
+ * A class that remembers team views.
  *
  * @author Tomas Westling &lt;tomas.westling&gt;
  */
@@ -99,8 +99,8 @@ public final class TeamViewsProperty extends TeamProperty implements ViewGroup, 
         }
 
         if (views.isEmpty()) {
-        // preserve the non-empty invariant
-          views.add(new ListView("Default", this));
+            // preserve the non-empty invariant
+            views.add(new ListView("Default", this));
         }
 
         viewGroupMixIn = new ViewGroupMixIn(this) {
@@ -207,9 +207,9 @@ public final class TeamViewsProperty extends TeamProperty implements ViewGroup, 
      *
      * @param req the StaplerRequest.
      * @param rsp the StaplerResponse.
-     * @throws IOException if the View can't be added.
-     * @throws ServletException if the View can't be created.
-     * @throws ParseException if the View can't be created.
+     * @throws IOException              if the View can't be added.
+     * @throws ServletException         if the View can't be created.
+     * @throws ParseException           if the View can't be created.
      * @throws Descriptor.FormException if the View can't be created.
      */
     public synchronized void doCreateView(StaplerRequest req, StaplerResponse rsp)
@@ -253,14 +253,13 @@ public final class TeamViewsProperty extends TeamProperty implements ViewGroup, 
     }
 
     /**
-     * Checks if a private view with the given name exists.
-     * An error is returned if exists==true but the view does not exist.
-     * An error is also returned if exists==false but the view does exist.
+     * Checks if a private view with the given name exists. An error is returned if exists==true but the view does not
+     * exist. An error is also returned if exists==false but the view does exist.
      *
-     * @param value the view name to check.
+     * @param value  the view name to check.
      * @param exists whether the view is supposed to exist or not.
      * @return a {@link FormValidation} describing whether the view exists or not.
-     **/
+     */
     public FormValidation doViewExistsCheck(@QueryParameter String value, @QueryParameter boolean exists) {
         checkPermission(View.CREATE);
         String view = Util.fixEmpty(value);
@@ -281,6 +280,7 @@ public final class TeamViewsProperty extends TeamProperty implements ViewGroup, 
             }
         }
     }
+
 
     /**
      * Descriptor for the TeamViewsProperty.

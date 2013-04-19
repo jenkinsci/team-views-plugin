@@ -27,16 +27,23 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import hudson.BulkChange;
 import hudson.CopyOnWrite;
 import hudson.XmlFile;
+import hudson.model.AllView;
 import hudson.model.Descriptor;
 import hudson.model.DescriptorByNameOwner;
 import hudson.model.Saveable;
+import hudson.model.View;
 import hudson.model.listeners.SaveableListener;
+import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import jenkins.model.ModelObjectWithContextMenu;
 import net.sf.json.JSONObject;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -160,6 +167,11 @@ public class Team implements Saveable, DescriptorByNameOwner, ModelObjectWithCon
         return name;
     }
 
+    @Override
+    public String getDisplayName() {
+        return getName();
+    }
+
     /**
      * Getter for the list of properties.
      *
@@ -209,12 +221,13 @@ public class Team implements Saveable, DescriptorByNameOwner, ModelObjectWithCon
      * Gets the specific property, or null.
      *
      * @param clazz the Class to get the property for.
+     * @param <T> the TeamProperty subtype to find.
      * @return the property.
      */
-    public TeamProperty getProperty(Class clazz) {
+    public <T extends TeamProperty> T getProperty(Class<T> clazz) {
         for (TeamProperty p : properties) {
             if (clazz.isInstance(p)) {
-                return p;
+                return clazz.cast(p);
             }
         }
         return null;
@@ -353,17 +366,78 @@ public class Team implements Saveable, DescriptorByNameOwner, ModelObjectWithCon
         return Jenkins.getInstance().getDescriptorByName(s);
     }
 
-    @Override
-    public String getDisplayName() {
-        return getName();
-    }
-
 
     @Override
     public ContextMenu doContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
         return new ContextMenu().add("views", getIconPath("images/24x24/user.png"), Messages.Team_Views()).
-                add("configure", getIconPath("images/24x24/setting.png"), Messages.Team_Configure());
+                add("configure", getIconPath("images/24x24/setting.png"), Messages.Team_Configure()).
+                add("import", getIconPath("images/24x24/gear2.png"), Messages.Team_ImportViews());
 
+    }
+
+    /**
+     * Imports the personal views from the provided userName. Skips the AllView.
+     *
+     * @param idOrFullName the username
+     * @throws IOException                  if so.
+     * @throws SAXException                 if any problems occur during the parsing of the user's config.xml. See
+     *                                      {@link UserUtil#unmarshalViews(String)}
+     * @throws ParserConfigurationException if a DocumentBuilder cannot be created while opening the user's config.xml.
+     *                                      See {@link UserUtil#unmarshalViews(String)}
+     * @throws TransformerException         if any problems occur during the transformation of the user's views in
+     *                                      config.xml. See {@link UserUtil#unmarshalViews(String)}
+     */
+    private void importViews(String idOrFullName) throws IOException, SAXException, ParserConfigurationException,
+            TransformerException {
+        UserUtil.checkViewsReadPermission(idOrFullName);
+        List<View> views = UserUtil.unmarshalViews(idOrFullName);
+        TeamViewsProperty teamProperty = getProperty(TeamViewsProperty.class);
+
+        if (views != null && teamProperty != null) {
+            for (View view : views) {
+                if (!(view instanceof AllView)) {
+                    teamProperty.addView(view);
+                }
+            }
+        }
+    }
+
+    /**
+     * FormValidation for the userName in /teams/name/import.
+     *
+     * @param userName the username
+     * @return the validation result.
+     */
+    public FormValidation doCheckUserName(@QueryParameter String userName) {
+        if (UserUtil.userExists(userName)) {
+            return FormValidation.ok();
+        } else {
+            return FormValidation.error("User %s does not exist.", userName);
+        }
+    }
+
+    /**
+     * The form submit for /teams/name/import imports the views from the userName.
+     *
+     * @param userName the userName to fetch the private views from
+     * @param request  the request
+     * @param response the response
+     * @throws Descriptor.FormException     if the user does not exist
+     * @throws TransformerException         See {@link #importViews(String)}
+     * @throws IOException                  if so.
+     * @throws SAXException                 See {@link #importViews(String)}
+     * @throws ParserConfigurationException See {@link #importViews(String)}
+     */
+    public void doImportViewsSubmit(@QueryParameter String userName, StaplerRequest request, StaplerResponse response)
+            throws Descriptor.FormException, TransformerException, IOException, SAXException,
+            ParserConfigurationException {
+        if (UserUtil.userExists(userName)) {
+            importViews(userName);
+            save();
+            response.sendRedirect2("/" + getUrl() + "views");
+        } else {
+            throw new Descriptor.FormException("User " + userName + " does not exist.", "userName");
+        }
     }
 
     @Override
