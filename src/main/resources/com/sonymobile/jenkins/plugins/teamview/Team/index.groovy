@@ -23,14 +23,17 @@
  */
 package com.sonymobile.jenkins.plugins.teamview.Team
 
+import hudson.model.View
 
 def l =  namespace(lib.LayoutTagLib);
 def st = namespace("jelly:stapler")
+def t = namespace("lib/hudson")
 
 l.layout(title: my.getName()) {
     st.include(page:"sidepanel")
     l.main_panel() {
         h1(my.getName());
+        t.editableDescription(permission: View.CONFIGURE)
         div() {
         }
     }

@@ -28,6 +28,7 @@ import hudson.BulkChange;
 import hudson.CopyOnWrite;
 import hudson.XmlFile;
 import hudson.model.AllView;
+import hudson.model.AbstractModelObject;
 import hudson.model.Descriptor;
 import hudson.model.DescriptorByNameOwner;
 import hudson.model.Saveable;
@@ -42,6 +43,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.xml.sax.SAXException;
 
+import javax.servlet.ServletException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.File;
@@ -62,7 +64,9 @@ import static com.sonymobile.jenkins.plugins.teamview.PluginImpl.getIconPath;
  * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
  */
 @XStreamAlias("team")
-public class Team implements Saveable, DescriptorByNameOwner, ModelObjectWithContextMenu, Comparable<Team> {
+public class Team extends AbstractModelObject
+                  implements Saveable, DescriptorByNameOwner, ModelObjectWithContextMenu, Comparable<Team> {
+
     private static final Logger logger = Logger.getLogger(Team.class.getName());
     private static final String CONFIG_FILE_NAME = "config.xml";
     private static final String TEAM_DIRECTORY_NAME = "teams";
@@ -440,6 +444,23 @@ public class Team implements Saveable, DescriptorByNameOwner, ModelObjectWithCon
         }
     }
 
+    /**
+     * Accepts the new description.
+     *
+     * @param req the request
+     * @param rsp the response
+     * @throws IOException      if so
+     * @throws ServletException if so
+     */
+    public synchronized void doSubmitDescription(StaplerRequest req, StaplerResponse rsp)
+            throws IOException, ServletException {
+        //checkPermission(CONFIGURE);
+
+        description = req.getParameter("description");
+        save();
+        rsp.sendRedirect(".");  // go to the top page
+    }
+
     @Override
     public int compareTo(Team o) {
         return getName().compareTo(o.getName());
@@ -468,5 +489,10 @@ public class Team implements Saveable, DescriptorByNameOwner, ModelObjectWithCon
     @Override
     public int hashCode() {
         return name != null ? name.hashCode() : 0;
+    }
+
+    @Override
+    public String getSearchUrl() {
+        return getUrl();
     }
 }
