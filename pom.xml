@@ -196,5 +196,10 @@
             </plugin>
         </plugins>
     </reporting>
+    <scm>
+        <connection>scm:git:ssh://github.com/jenkinsci/team-views-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/team-views-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/team-views-plugin</url>
+    </scm>
 </project>
 
